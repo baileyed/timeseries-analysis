@@ -1,0 +1,252 @@
+---
+title: "Problem Set 6"
+author: "Elizabeth Bailey"
+date: "9/30/2021"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+data files converted to CSV files with these commands
+
+echo 'YEAR, MONTH, TIME, CO2 ' >! co2_maunaloa.csv
+awk 'NR>53 {print $1 ", " $2 ", " $3 ", " $4}' co2_mm_mlo.txt >> co2_maunaloa.csv
+
+
+Question 1a -- linear trend fit to Mauna Loa CO2
+
+The model underestimates the beginning and end of the data, but it captures the middle part of the data well.
+
+```{r}
+
+mlo_co2 <- read.csv("co2_maunaloa.csv")
+temps <- mlo_co2$DTEMPC
+years <- mlo_co2$YEAR
+months <- mlo_co2$MONTH
+time <- mlo_co2$TIME
+co2 <- mlo_co2$CO2
+
+# title("Mauna Loa Carbon Dioxide Measurements",xlab="year",ylab="°Parts Per Million")
+
+lmco2 <- lm(co2 ~ time)
+summary(lmco2)
+yrly <- lmco2$coefficients[2]
+yrly
+dcadl <- yrly*10
+dcadl
+plot(lmco2)
+
+```
+Problem 1b -- start and finish CO2 predictions
+
+both end points are underestimated by the model.
+```{r}
+
+predco2 <- predict(lmco2)
+start <- predco2[1]
+end <- predco2[length(predco2)]
+start0 <- co2[1]
+end0 <- co2[length(co2)]
+
+print(paste("Starting value of linear model is ",start," ppm in March 1958, and finish is ",end," ppm in August 2021"))
+
+print(paste("Starting value of actual data is ",start0," ppm in March 1958, and finish is ",end0," ppm in August 2021"))
+```
+Problem 1c --  
+```{r}
+
+residual1 <- (lmco2$residuals)
+s <- summary(lmco2)
+s$fstatistic[1]
+
+print(paste("The standard deviation of the data misfit to the linear model is ", sd(residual1)," ppm"))
+
+```
+problem 1d -- plot co2 data against the linear model
+
+The rate of change is overestimated at the beginning of the curve and underestimated at the end of the curve.
+```{r}
+
+lmco2 <- lm(co2 ~ time)
+predco2 <- predict(lmco2)
+plot(time,co2,"l")
+lines(time,predco2)
+title("Mauna Loa CO2 versus linear-ramp model")
+
+```
+
+Problem 1e -- fit the data with a quadratic
+
+The start and end values are pretty good representations of the data - better than the linear model.
+```{r}
+
+time2 <- time^2
+lm2co2 <- lm(co2~time+time2)
+# summary(lm2co2)
+pred2co2 <- predict(lm2co2)
+
+start <- pred2co2[1]
+finish <- pred2co2[length(pred2co2)]
+start0 <- co2[1]
+finish0 <- co2[length(co2)]
+
+print(paste("Starting value of quadratic model is ",start," ppm in March 1958, and finish is ",finish," ppm in August 2021"))
+
+print(paste("Starting value of actual data is ",start0," ppm in March 1958, and finish is ",finish0," ppm in August 2021"))
+
+
+
+```
+problem 1f -- yearly increases of the quadratic model at start and finish of CO2 series
+
+```{r}
+
+start_ramp <- pred2co2[13]-pred2co2[1]
+finish_ramp <- pred2co2[762]-pred2co2[750]
+
+print(paste("Starting CO2 increase per year of quadratic model is ",start_ramp," ppm in 1958-1959, and ending CO2 increase per year is ",finish_ramp," ppm in 2020-2021"))
+
+```
+problem 1g -- standard deviation of the misfit to data
+
+```{r}
+
+residual2 <- (lm2co2$residuals)
+s <- summary(lm2co2)
+s$fstatistic[1]
+
+print(paste("The standard deviation of the data misfit to the quadratic model is ", sd(residual2)," ppm"))
+
+```
+
+problem 1h -- plot the data against quadratic model
+
+The model does not capture the seasonal cycle of the data.
+```{r}
+
+plot(time,co2,"l")
+lines(time,pred2co2)
+title("Mauna Loa CO2 versus quadratic model")
+
+```
+problem 1i -- cubic model fit
+
+There is no significant change to the fit of the model from the cubic to quadtradic models. There is not a big change in the standard deviation of the data misfit.
+
+```{r}
+
+time2 <- time^2
+time3 <- time^3
+lm3co2 <- lm(co2~time+time2+time3)
+# summary(lm3co2)
+
+pred3co2 <- predict(lm3co2)
+
+start <- pred3co2[1]
+finish <- pred3co2[length(pred3co2)]
+start0 <- co2[1]
+finish0 <- co2[length(co2)]
+
+residual3 <- (lm3co2$residuals)
+s <- summary(lm3co2)
+s$fstatistic
+
+print(paste("Starting value of cubic model is ",start," ppm in March 1958, and finish is ",finish," ppm in August 2021"))
+
+print(paste("Starting value of actual data is ",start0," ppm in March 1958, and finish is ",finish0," ppm in August 2021"))
+
+print(paste("The standard deviation of the data misfit to the cubic model is ", sd(residual3)," ppm"))
+
+plot(time,co2,"l")
+lines(time,pred3co2)
+title("Mauna Loa CO2 versus cubic model")
+
+```
+Problem 2a -- add the annual cycle to the co2 datafit
+
+```{r}
+pi2 <- 2*pi
+anns <- sin(pi2*time)
+annc <- cos(pi2*time)
+lm2aco2 <- lm(co2 ~ time + time2 +anns + annc)
+
+coefs <- coef(summary(lm2aco2))["anns","Estimate"]
+coefc <- coef(summary(lm2aco2))["annc","Estimate"]
+coefann <- sqrt(coefs^2 + coefc^2)
+dcoefs <- coef(summary(lm2aco2))["anns","Std. Error"]
+dcoefc <- coef(summary(lm2aco2))["annc","Std. Error"]
+dcoefann <- sqrt(dcoefs^2 + dcoefc^2)
+
+print(paste("The amplitude of the full annual cycle is ",coefann," ppm with standard deviation ",dcoefann," ppm"))
+
+```
+Problem 2b -- Annual cycle amplitude
+Problem 2b -- Annual cycle phase
+
+```{r}
+
+phi <- atan2(coefs,coefc)
+peakyr <- phi/(2*pi)
+peakmon <- peakyr*12
+
+print(paste("peak phase at the year fraction ",peakyr,"  month index is ",peakmon))
+
+```
+Problem 2c -- plot residuals of datafit without and with the annual-cycle fit
+
+```{r}
+
+resid <- co2 - pred2co2
+residual21 <- co2 - predict(lm2aco2)
+
+print(paste("The st dev of the data misfit to the quadratic model is ", sd(resid)," ppm"))
+print(paste("The st dev of the data misfit to the quadratic model plus annual cycle is ", sd(residual21)," ppm"))
+
+plot(resid,residual21)
+title("Mauna Loa CO2 series after least squares fits")
+
+plot(resid, type='l')
+lines(residual21, type='l', col='yellow')
+```
+problem 2d -- fitting a bi-annual term
+
+```{r}
+
+pi4 <- 4*pi
+ann2s <- sin(pi4*time)
+ann2c <- cos(pi4*time)
+lm2a2co2 <- lm(co2 ~ time + time2 + anns + annc + ann2s + ann2c)
+
+coef2s <- coef(summary(lm2a2co2))["ann2s","Estimate"]
+coef2c <- coef(summary(lm2a2co2))["ann2c","Estimate"]
+coef2ann <- sqrt(coef2s^2 + coef2c^2)
+dcoef2s <- coef(summary(lm2a2co2))["ann2s","Std. Error"]
+dcoef2c <- coef(summary(lm2a2co2))["ann2c","Std. Error"]
+dcoef2ann <- sqrt(dcoef2s^2 + dcoef2c^2)
+
+phi <- atan2(coef2s,coef2c)
+peakyr <- phi/(2*pi)
+peakmon <- peakyr*12
+
+print(paste("peak phase at the year fraction ",peakyr,"  month index is ",peakmon))
+
+print(paste("The amplitude of the semi-annual cycle is ",coef2ann," ppm with standard deviation ",dcoef2ann," ppm"))
+
+plot(time, predict(lm2a2co2), type = 'l')
+lines(time, predict(lm2aco2), type='l', col='yellow')
+title("Mauna Loa CO2 series annual cycles")
+
+```
+Problem 2e -- plot residuals of datafit with annual cycle and with the adjusted annual-cycle fit
+
+It add the seasonal cycle to the model. 
+
+```{r}
+
+residual22 <- co2 - predict(lm2a2co2)
+print(paste("The st dev of the data misfit to the quadratic model plus adjusted annual cycle is ", sd(residual22)," ppm"))
+
+plot(residual22, type='l')
+title("Mauna Loa CO2 series after least squares fits")
+```

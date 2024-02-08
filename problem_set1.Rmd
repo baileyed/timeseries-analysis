@@ -1,0 +1,186 @@
+---
+title: "EPS 659a PSET1"
+output: word_document
+---
+
+Question 1a
+
+a) if a coin is flipped four times, what is the probability of three heads and one tails?
+
+
+```{r}
+h <- 0.5
+t <- 1-h
+
+4*(h^3)*t
+```
+Question 1b
+
+b) if a coin is flipped four times, what is the probability of at least two heads? 
+```{r}
+(h^4) + 4*(h^3)*t + 6*(h^2)*(t^2)
+```
+Question 1c
+
+c) if a coin is flipped 8 times, what is the probability of at least 5 tails and at least one heads?
+
+```{r}
+56*(h^3)*(t^5) + 28*(h^2)*(t^6) + 8*h*(t^7) 
+```
+Question 1d
+
+d) if you bet a dollar on every coin flip, what is the probability that you have won at least $4 after 10 flips? Does this probability change if you vary your choices of heads or tails for each flip?
+```{r}
+(h^10) + 10*(h^9)*t + 45*(h^8)*(t^2) + 120*(h^7)*(t^3) + 210*(h^6)*(t^4) + 252*(h^5)*(t^5) + 210*(h^4)*(t^6)
+
+
+210*(h^6)*(t^4) + 252*(h^5)*(t^5) + 210*(h^4)*(t^6) + 120*(h^3)*(t^7) + 45*(h^2)*(t^8) + 10*h*(t^9) + (t^10)
+```
+The probability does not change if you vary your choices of heads or tails for each flip.
+
+Question 1e
+
+e) Suppose you have combined a large number of card decks (hearts, spades, clubs, diamonds) so that drawing a few cards from the deck does not change the probabilities of drawing a card significantly. (If you draw cards from a single deck, the probability of drawing a King drops by ∼25% after you draw any one King. We don't want to worry about that effect in part (e) here.) If you draw five cards from such a large deck, what is the probability that three or more of the cards will be hearts? 
+
+```{r}
+h <- 0.25
+
+s <- 0.25
+
+c <- 0.25
+
+d <- 0.25
+
+
+10*(c^2)*(h^3) + 20*c*d*(h^3)  + 5*c*(h^4) + 20*c*(h^3)*s  + 10*(d^2)*(h^3) +  5*d*(h^4) + 20*d*(h^3)*s  + (h^5) + 5*(h^4)*s + 10*(h^3)*(s^2)
+```
+Question 1f
+
+f) If you draw four cards from such a large deck, what is the probability that two or more of the cards will be either a Jack or a Queen? 
+
+``` {r}
+JQ <- 2/13
+E <- 11/13 
+
+JQ^4 + 4*JQ^3*E + 6*JQ^2*E^2 
+```
+Question 1g
+
+g) If you draw four cards from a single 52-card deck of cards, what is the probability of drawing two cards that are either a Jack or a Queen?
+
+```{r}
+p1 <- 8.0/52.0
+p2 <- 7.0/51.0
+p3 <- 44.0/50.0
+p4 <- 43.0/49.0
+
+prob <- p1*p2*p3*p4
+prob
+
+fac <- factorial(4)/(factorial(2)*factorial(2))
+fac
+probtot <- fac*prob
+probtot
+```
+Question 3a
+
+``` {r}
+x <- rnorm(n=1000, mean=1, sd=2)
+plot(x)
+y <- rnorm(n=1000, mean=-1, sd=0.5)
+plot(x,y)
+z <- (x+y)/2
+plot(x,z)
+mean(x)
+mean(x^2)
+mean(y)
+mean(y^2)
+mean(z)
+mean(z^2)
+mean((x+y)^2)
+mean((x+z)^2)
+```
+
+``` {r}
+x <- rnorm(n=5000, mean=1, sd=2)
+plot(x)
+y <- rnorm(n=5000, mean=-1, sd=0.5)
+plot(x,y)
+z <- (x+y)/2
+plot(x,z)
+mean(x)
+mean(x^2)
+mean(y)
+mean(y^2)
+mean(z)
+mean(z^2)
+mean((x+y)^2)
+mean((x+z)^2)
+```
+Theoretical Values for question 3a. The case where n = 5000 is closer to the theoretical values.
+
+```{r}
+x <- 1
+x
+x2 <- 2^2 + 1^2
+x2
+y <- -1
+y
+y2 <- (-1)^2 + 0.5^2
+y2
+z <- x/2 + y/2
+z
+z2 <- x2/4 + (-1)*(1)/2 + y2/4
+z2
+xy <- x2 + 2*x*y + y2
+xy
+xz <- 2.25*x2 + 1.5*x*y + 0.25*y2
+xz
+```
+Question 3b
+
+```{r}
+xx <- replicate(100,0)
+xx2 <- replicate(100,0)
+yy <- replicate(100,0)
+yy2 <- replicate(100,0)
+zz <- replicate(100,0)
+zz2 <- replicate(100,0)
+
+for (ii in 1:100){
+  x <- rnorm(n=1000, mean=1, sd=2)
+  y <- rnorm(n=1000, mean=-1, sd=.5)
+  z <- (x+y)/2
+  x2 <- x^2
+  y2 <- y^2
+  z2 <- z^2
+
+  xx[ii] <- mean(x)
+  xx2[ii] <- mean(x2)
+  yy[ii] <- mean(y)
+  yy2[ii] <- mean(y2)
+  zz[ii] <- mean(z)
+  zz2[ii] <- mean(z2)
+}
+hist(x,breaks=21)
+
+hist(xx,breaks=21)
+hist(xx2,breaks=21)
+
+hist(yy,breaks=21)
+hist(yy2,breaks=21)
+hist(zz,breaks=21)
+hist(zz2,breaks=21)
+
+mean(xx)
+mean(xx2)
+mean(yy)
+mean(yy2)
+mean(zz)
+mean(zz2)
+
+```
+The mean square is typically further from the expected distribution (Gaussian) compared to the mean in the histogram. In addition, looping over 100 iterations brings each expectation closer to the theoretical value than either of the two previous cases.  
+
+
+

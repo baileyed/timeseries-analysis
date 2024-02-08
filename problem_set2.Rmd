@@ -1,0 +1,417 @@
+---
+title: "Problem Set 2"
+author: "Elizabeth Bailey"
+date: "8/26/2021"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+Question 1a 
+
+a) For µ = 1 and σ = 2, plot the Gaussian PDF and CDF for −6 < X < 6.
+
+```{r}
+
+x <- seq(-6.0,6.0, by=0.01)
+p <- seq(0.001,.999,by=0.001)
+
+dd <- dnorm(x,mean=1, sd=2)
+plot(x, dd, type='l')
+
+pp <- pnorm(x,mean=1,sd=2)
+plot(x, pp, type='l')
+
+```
+Question 1b
+
+b) For µ = 1 and σ = 2, confirm the normalization condition R ∞−∞ p(X)dX = 1 with a numerical integral over an appropriate range of X with at least 1000 values of X and p(X).
+
+```{r}
+
+moo <- 1
+sigma <- 2
+
+x <- seq(-6.0,6.0, by=0.01)
+y <- function(x) (1/(sqrt(2*pi)*sigma))*exp(-((x-moo)^2)/(2*sigma^2))
+
+#Numerical integration
+sum <- 0
+for (x in seq(-100, 100, by=0.01)) {
+  
+  rum <- y(x)*.01
+  sum <- sum + rum
+}
+sum
+
+#Continuous Integration to check accuracy.
+integrate(y, lower=-Inf, upper=Inf)
+```
+Quesiton 1c
+
+c) For µ = 1 and σ = 2, confirm the mean of the PDF R ∞−∞ Xp(X)dX = µ with a numerical integral over an appropriate range of X with at least 1000 values of X and p(X).
+
+```{r}
+moo <- 1
+sigma <- 2
+
+x <- seq(-6.0,6.0, by=0.01)
+meen <- function(x) {x*(1/(sqrt(2*pi)*sigma))*exp(-((x-moo)^2)/(2*sigma^2))}
+
+#Numerical integration
+sum <- 0
+for (x in seq(-100, 100, by=0.01)) {
+  
+  rum <- meen(x)*.01
+  sum <- sum + rum
+}
+sum
+
+#Continuous Integration to check accuracy.
+integrate(meen, lower=-Inf, upper=Inf)
+
+```
+Question 1d 
+
+d) For µ = 1 and σ = 2, confirm the variance of the PDF R ∞−∞(X − µ)2p(X)dX = σ2 with a numerical integral over an appropriate range of X with at least 1000 values of X and p(X).
+
+```{r}
+moo <- 1
+sigma <- 2
+
+x <- seq(-6.0,6.0, by=0.01)
+vary <- function(x) {(x-moo)^2*(1/(sqrt(2*pi)*sigma))*exp(-((x-moo)^2)/(2*sigma^2))}
+
+#Numerical integration
+sum <- 0
+for (x in seq(-100, 100, by=0.01)) {
+  
+  rum <- vary(x)*.01
+  sum <- sum + rum
+}
+sum
+
+#Continuous Integration to check accuracy.
+integrate(vary, lower=-Inf, upper=Inf)
+
+```
+Question 1e
+
+e) For µ = 0 and σ = 1, the sample markdown file probset2 template.Rmd contains the following commands:
+Explain why the sixth line of R code is useful: ddnn <- nn*dd/5.0.
+
+It is a way of converting the function from the probability of the function to a function of the number of times an event occurs in the sample size (the y-axis converts from probabilities to frequencies).
+
+```{r}
+x <- seq(-5,5, by=.01) 
+dd <- dnorm(x, sd=1)
+plot(x,dd)
+qq <- qnorm(p,sd=1)
+plot(p,qq)
+nn <- 10000
+xx <- rnorm(nn,sd=1)
+hist(xx,breaks=seq(-6,6,by=0.2))
+ddnn <- nn*dd/5
+lines(x,ddnn)
+``` 
+Question 1f
+
+f) For the Gaussian with µ = 1 and σ = 2, what are the bounding values of the 10% and 90% percentiles of the distribution?
+
+```{r}
+
+moo <- 1
+sig <- 2
+
+tenperc <- qnorm(.10, mean=moo, sd=sig)
+tenperc
+nineperc <- qnorm(.90, mean=moo, sd=sig)
+nineperc
+
+```
+Question 2a
+
+a) For ν = 2, show that the χ2 PDF reduces to a normalized exponential function, that is, normalized so that Z ∞0 p(X)dX = 1
+
+```{r}
+
+nu <- 2
+k <- nu/2
+gma <- factorial(k)
+pfx <- function(x) {(1/(2^(nu/2)*gma))*x^((nu/2)-1)*exp(-x/2)}
+
+#Numerical integration
+sum <- 0
+for (x in seq(.0001, 1000, by=0.01)) {
+  
+  rum <- pfx(x)*.01
+  sum <- sum + rum
+}
+sum
+
+#Continuous Integration to check accuracy.
+integrate(pfx, lower=0, upper=Inf)
+
+```
+Question 2b
+
+b) For ν = 4, plot the PDF for X ∈ [0, 10], compute the peak values of the PDF using calculus and mark it on the graph.
+
+```{r}
+
+x <- seq(0, 10.0, by=0.01)
+p <- seq(0.001,.999,by=0.001)
+
+dchi <- dchisq(x, df=4)
+plot(x,dchi,type='l')
+lines(2, (1/(2*exp(1))), type='p', col='red')
+
+```
+Question 2c
+
+c) For ν = 4, confirm the normalization condition R ∞ 0 p(X)dX = 1 with a numerical integral over an appropriate range of X with at least 1000 values of X and p(X). Compute the expected value hXi numerically as well, to confirm its theoretical value hXi = ν.
+
+```{r}
+
+nu <- 4
+k <- nu/2
+gma <- factorial(k-1)
+pfx <- function(x) {(1/((2^(nu/2))*gma))*(x^((nu/2)-1))*(exp(-x/2))}
+
+#Numerical integration
+sum <- 0
+for (x in seq(.0001, 1000, by=0.01)) {
+  
+  rum <- pfx(x)*.01
+  sum <- sum + rum
+}
+
+sum
+
+#Continuous Integration to check accuracy.
+integrate(pfx, lower=0, upper=Inf)
+
+men <- function(x) {x*(1/(2^(nu/2)*gma))*x^((nu/2)-1)*exp(-x/2)}
+
+#Numerical integration
+sum <- 0
+for (x in seq(.0001, 1000, by=0.01)) {
+  
+  rum <- men(x)*.01
+  sum <- sum + rum
+}
+sum
+
+#Continuous Integration to check accuracy.
+integrate(men, lower=0, upper=Inf)
+
+```
+Question 2d
+
+d) For ν = 10, plot the PDF for X ∈ [0, 30], compute the peak values of the PDF using calculus and mark it on the graph.
+
+```{r}
+
+x <- seq(0, 30.0, by=0.01)
+p <- seq(0.001,.999,by=0.001)
+
+dchi <- dchisq(x, df=10)
+plot(x,dchi, type='l')
+lines(8, (16/(3*exp(4))), type='p', col='red')
+```
+Question 2e
+
+e) For ν = 2,4,6,8, and 10, use the CDF function pchisq to compute the probability of X > 2ν for each value of ν. Do these relative deviations from the expected value hXi = ν become less probable or more probable as ν increases?
+
+They become less probable as nu increases.
+```{r}
+c=matrix(0,5,2)
+
+for (n in seq(2, 10, 2)) {
+
+nu <- n
+i <- n/2
+c[i,1] <- n
+
+q <- seq(0, 30.0, by=0.01)
+pch <- pchisq(q, df=nu)
+plot(q, pch, type='l')
+par(new=TRUE)
+
+p2nu <- pchisq(2*nu, df=nu)
+prb <- 1 - p2nu
+prb
+c[i,2] <- prb
+
+}
+c
+```
+Question 3a
+
+a) For µ = 0 and σ = 1, plot the log-normal PDF and CDF for 0 < X < 6. Limit the y axis if there is a singularity in the PDF as X → 0+.
+
+```{r}
+
+x <- seq(0,6,by=.01)
+dl <- dlnorm(x, meanlog = 0, sdlog = 1)
+plot(x, dl, type='l')
+
+pl <- plnorm(x, meanlog = 0, sdlog = 1)
+plot(x, pl, type='l')
+
+```
+Question 3b
+
+b) For µ = 0 and σ = 1, compute the expected value of the mean hXi = R ∞ 0 Xp(X)dX with a numerical integral over an appropriate range of X with at least 1000 values of X and p(X).
+
+```{r}
+ 
+moo <- 0
+sig <- 1
+
+pfx <- function(x) {x/(sig*x*sqrt(2*pi))*exp(-((log(x)-moo)^2)/(2*(sig^2)))}
+
+#Numerical integration
+sum <- 0
+for (x in seq(0.001, 1000, by=0.01)) {
+  
+  rum <- pfx(x)*.01
+  sum <- sum + rum
+}
+sum
+
+#Continuous Integration to check for accuracy
+integrate(pfx, lower=0, upper=Inf)
+
+```
+Question 3c
+
+c) For µ = 2 and σ = 1, plot the log-normal PDF and CDF for 0 < X < 25. Limit the y axis if there is a singularity in the PDF as X → 0+.
+
+```{r}
+
+x <- seq(0,25,by=.01)
+dl <- dlnorm(x, meanlog = 2, sdlog = 1)
+plot(x, dl, type='l')
+
+pl <- plnorm(x, meanlog = 2, sdlog = 1)
+plot(x, pl, type='l')
+
+```
+Question 3d
+
+d) For µ = 2 and σ = 1, compute the expected value of the mean hXi = R ∞ 0 Xp(X)dX with a numerical integral over an appropriate range of X with at least 1000 values of X and p(X).
+
+```{r}
+
+moo <- 2
+sig <- 1
+
+pfx <- function(x) {x/(sig*x*sqrt(2*pi))*exp(-((log(x)-moo)^2)/(2*(sig^2)))}
+
+#Numerical integration
+sum <- 0
+for (x in seq(0.001, 1000, by=0.01)) {
+  
+  rum <- pfx(x)*.01
+  sum <- sum + rum
+}
+sum
+
+#Continuous Integration to check for accuracy
+integrate(pfx, lower=0, upper=Inf)
+
+```
+Question 4a
+
+a) For N = 10, p = 0.5, plot the binomial PDF and CDF for 0 ≤ K ≤ 10. For N = 100, p = 0.5, plot the binomial PDF and CDF for 0 ≤ K ≤ 100.
+
+```{r}
+
+k <- seq(0, 10, by=1)
+dbi <- dbinom(k, size = 10, prob = 0.5)
+plot(k, dbi, type='l')
+
+pbi <- pbinom(k, size = 10, prob = 0.5)
+plot(k, pbi, type='l')
+
+```
+```{r}
+
+k <- seq(0, 100, by=1)
+dbi <- dbinom(k, size = 100, prob = 0.5)
+plot(k, dbi, type='l')
+
+pbi <- pbinom(k, size = 100, prob = 0.5)
+plot(k, pbi, type='l')
+
+```
+Question 4b
+
+b) For N = 10, p = 0.1, plot the binomial PDF and CDF for 0 ≤ K ≤ 10. For N = 100, p = 0.1, plot the binomial PDF and CDF for 0 ≤ K ≤ 100.
+
+```{r}
+
+k <- seq(0, 10, by=1)
+dbi <- dbinom(k, size = 10, prob = 0.1)
+plot(k, dbi, type='l')
+
+pbi <- pbinom(k, size = 10, prob = 0.1)
+plot(k, pbi, type='l')
+
+```
+```{r}
+
+k <- seq(0, 100, by=1)
+dbi <- dbinom(k, size = 100, prob = 0.1)
+plot(k, dbi, type='l')
+
+pbi <- pbinom(k, size = 100, prob = 0.1)
+plot(k, pbi, type='l')
+
+```
+
+Question 4c
+
+c) Assume that great earthquakes (Richter magnitude M ≥ 8.0) occur yearly in a plate boundary segment, say the Western Aleutians, with a fixed probability p = 0.01 events per year. Assume also that each year’s earthquakes are statistically independent of all other years’ earthquakes. In a single century, what is the probability of K ≥ 3 earthquakes on this plate boundary segment? In a single century, what is the probability of K ≥ 5 earthquakes on this plate-boundary segment?
+
+```{r}
+
+p <- 0.01 #probability of the event occurring
+N <- 100 #Number of trials of the event
+k <- seq(0, 100, by=1) #The number of instances of an event
+dbi <- dbinom(4:100, size = N, prob = p)
+prob3 <- sum(dbi)
+prob3
+
+dbi <- dbinom(6:100, size = N, prob = p)
+prob5 <- sum(dbi)
+prob5
+
+
+```
+Question 4d
+
+d) Let p3 be the probability of K ≥ 3 earthquakes on the plate-boundary segment in part (c). The typical number of centuries that one might expect to occur in order to observe a single instance of K ≥ 3 great earthquakes is the reciprocal of this probability, that is, M3 ≈ (p3) −1 3 centuries. Use the function rbinom to realize 100 centuries of great-earthquake activity with these binomial statistics. How many centuries in your binomial realizations have K ≥ 3 events? Do these realizations comport with the probability you estimated in part (c)?
+
+These realizations typically have 20 to 30 instances of K ≥ 3 great earthquakes occurring over 100 centuries, which is much more frequent than the probability estimated in part (C) (m3 ~ every 54 centuries).
+```{r}
+
+x <- seq(0, 100, by=1)
+p3 <- prob3
+m3 <- 1/p3
+m3
+rbi <- rbinom(x, size=N, prob=p3)
+max(rbi)
+plot(x, rbi)
+
+count=0
+for(i in 1:length(x)) {
+if(rbi[i]>=3) {
+count=count+1
+}
+}
+count
+
+```
+

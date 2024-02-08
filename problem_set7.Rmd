@@ -1,0 +1,350 @@
+---
+title: "Problem Set 7"
+author: "Elizabeth Bailey"
+date: "10/13/2021"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+data files converted to CSV files with these commands
+
+echo 'YEAR, MONTH, TIME, CO2 ' >! co2_maunaloa.csv
+awk 'NR>53 {print $1 ", " $2 ", " $3 ", " $4}' co2_mm_mlo.txt >> co2_maunaloa.csv
+
+Problem 1
+
+```{r}
+
+mlo_co2 <- read.csv("co2_maunaloa.csv")
+names(mlo_co2)
+temps <- mlo_co2$DTEMPC
+length(temps)
+year <- mlo_co2$YEAR
+months <- mlo_co2$MONTH
+time <- mlo_co2$TIME
+co2 <- mlo_co2$CO2
+
+
+plot(time,co2,col='black',type="l",xlab="",ylab="")
+title("Mauna Loa Carbon Dioxide Measurements",xlab="year",ylab="°Parts Per Million")
+
+```
+
+Problem 1a --  fit to Mauna Loa CO2 in decades
+
+They increase over time. At 1980, it transition to a more constant amplitude. 
+```{r}
+
+# pre-define arrays for regression parameters of seven data segments
+ann1 <- 1:7
+ann1err <- 1:7
+ann2 <- 1:7
+ann2err <- 1:7
+yr <- 1:7
+
+pi2 <- 2*pi
+pi4 <- 4*pi
+anns <- sin(pi2*time)
+annc <- cos(pi2*time)
+ann2s <- sin(pi4*time)
+ann2c <- cos(pi4*time)
+# initialize segment counter
+k=0
+# the data segments are defined by their start-points
+for (j in c(1,109,217,321,429,537,637)){
+  k=k+1
+  timed <- time[j:(j+119)]
+  time2d <- timed^2
+  co2d <- co2[j:(j+119)]
+  annsd <- anns[j:(j+119)]
+  anncd <- annc[j:(j+119)]
+  ann2sd <- ann2s[j:(j+119)]
+  ann2cd <- ann2c[j:(j+119)]
+  lmlmlm <- lm(co2d ~ timed + time2d + annsd + anncd + ann2sd + ann2cd)
+  summary(lmlmlm)
+  anns1 <- coef(summary(lmlmlm))["annsd","Estimate"]
+  annc1 <- coef(summary(lmlmlm))["anncd","Estimate"]
+  ann1[k] <- sqrt(anns1^2+annc1^2)
+  anns1 <- coef(summary(lmlmlm))["annsd","Std. Error"]
+  annc1 <- coef(summary(lmlmlm))["anncd","Std. Error"]
+  ann1err[k] <- sqrt(anns1^2+annc1^2)
+  anns2 <- coef(summary(lmlmlm))["ann2sd","Estimate"]
+  annc2 <- coef(summary(lmlmlm))["ann2cd","Estimate"]
+  ann2[k] <- sqrt(anns2^2+annc2^2) 
+  yr[k] <- year[j+60]
+  anns2 <- coef(summary(lmlmlm))["ann2sd","Std. Error"]
+  annc2 <- coef(summary(lmlmlm))["ann2cd","Std. Error"]
+  ann2err[k] <- sqrt(anns2^2+annc2^2)
+}
+
+
+plot(yr,ann1,col='black',xlab="Year",ylab="Annual Cycle Amplitude (ppm CO2)",ylim=range(ann1+ann1err,ann1-ann1err))
+arrows(x0=yr,y0=ann1+ann1err,x1=yr,y1=ann1-ann1err,code=3,angle=90,length=0.2)
+
+```
+Problem 1b --  same plot for the annual cycle phase
+
+It has shifted approximately 7 days. 
+```{r}
+
+# pre-define arrays for regression parameters of seven data segments \nuline
+ann1_phase <- 1:7
+ann1_pherr <- 1:7
+# ann2_phase <- 1:7
+# ann2_pherr <- 1:7
+# yr <- 1:7
+
+k=0
+# the data segments are defined by their start-points
+for (j in c(1,109,217,321,429,537,637)){
+  k=k+1
+  timed <- time[j:(j+119)]
+  time2d <- timed^2
+  co2d <- co2[j:(j+119)]
+  annsd <- anns[j:(j+119)]
+  anncd <- annc[j:(j+119)]
+  ann2sd <- ann2s[j:(j+119)]
+  ann2cd <- ann2c[j:(j+119)]
+  lmlmlm <- lm(co2d ~ timed + time2d + annsd + anncd + ann2sd + ann2cd)
+  anns1 <- coef(summary(lmlmlm))["annsd","Estimate"]
+  annc1 <- coef(summary(lmlmlm))["anncd","Estimate"]
+  annamp <- sqrt(anns1^2 + annc1^2)
+  ann1_phase[k] <- 180*atan2(anns1,annc1)/pi
+  anns1 <- coef(summary(lmlmlm))["annsd","Std. Error"]
+  annc1 <- coef(summary(lmlmlm))["anncd","Std. Error"]
+  ann1_pherr[k] <- (180/pi)*sqrt(anns1^2+annc1^2)/annamp
+}
+
+dif <- ann1_phase[1]-ann1_phase[length(ann1_phase)]
+dif
+plot(yr,ann1_phase,col='black',xlab="Year",ylab="Annual Cycle Phase (degrees)",ylim=range(ann1_phase+ann1_pherr,ann1_phase-ann1_pherr))
+
+```
+Problem 1c -- plots for time evolution of semi-annual amplitude and phase -
+
+The amplitude has increased since the 1960s. 
+```{r}
+
+# pre-define arrays for regression parameters of seven data segments
+ann1 <- 1:7
+ann1err <- 1:7
+ann2 <- 1:7
+ann2err <- 1:7
+yr <- 1:7
+
+anns <- sin(pi2*time)
+annc <- cos(pi2*time)
+ann2s <- sin(pi4*time)
+ann2c <- cos(pi4*time)
+# initialize segment counter
+k=0
+# the data segments are defined by their start-points
+for (j in c(1,109,217,321,429,537,637)){
+  k=k+1
+  timed <- time[j:(j+119)]
+  time2d <- timed^2
+  co2d <- co2[j:(j+119)]
+  annsd <- anns[j:(j+119)]
+  anncd <- annc[j:(j+119)]
+  ann2sd <- ann2s[j:(j+119)]
+  ann2cd <- ann2c[j:(j+119)]
+  lmlmlm <- lm(co2d ~ timed + time2d + annsd + anncd + ann2sd + ann2cd)
+  summary(lmlmlm)
+  anns2 <- coef(summary(lmlmlm))["ann2sd","Estimate"]
+  annc2 <- coef(summary(lmlmlm))["ann2cd","Estimate"]
+  ann2[k] <- sqrt(anns2^2+annc2^2) 
+  yr[k] <- year[j+60]
+  anns2 <- coef(summary(lmlmlm))["ann2sd","Std. Error"]
+  annc2 <- coef(summary(lmlmlm))["ann2cd","Std. Error"]
+  ann2err[k] <- sqrt(anns2^2+annc2^2)
+}
+
+plot(yr,ann2,col='black',xlab="Year",ylab="SemiAnnual Cycle Amplitude (ppm CO2)",ylim=range(ann2+ann2err,ann2-ann2err))
+arrows(x0=yr,y0=ann2+ann2err,x1=yr,y1=ann2-ann2err,code=3,angle=90,length=0.2)
+
+```
+Problem 2a -- fit log(data) with a two-parameter model
+
+```{r}
+
+lm_logco2 <- lm(log(co2)~time)
+pred_logco2 <- predict(lm_logco2)
+
+plot(time,log(co2), type='l',xlab="")
+lines(time, pred_logco2)
+title("Mauna Loa Carbon Dioxide Measurements",xlab="year")
+
+```
+problem 2b -- log everything back and note predicted values in 1958 and 2021
+
+The model under predicts the CO2 concentrations at the end points. In addition, it over predicts the middle of the data (1980s-2000s).
+```{r}
+
+exp_pred <- exp(pred_logco2)
+
+print(paste("Predictions for March 1958: ",exp_pred[1],"ppm and August 2021: ",exp_pred[length(exp_pred)]))
+print(paste("Actual Values for March 1958: ",co2[1],"ppm and August 2021: ",co2[length(exp_pred)]))
+
+plot(time,co2,col='black',type="l",xlab="",ylab="")
+lines(time, exp_pred)
+title("Mauna Loa Carbon Dioxide Measurements",xlab="year",ylab="°Parts Per Million")
+```
+
+Problem 2c -- nonlinear least squares for 3-parameter exponential CO2 model -- test starting values of model parameters
+
+The standard deviation of the residual variance is larger.
+```{r}
+
+s <- summary(lmlmlm)
+sr <- s$sigma
+sr
+
+
+astart <- coef(summary(lm_logco2))["(Intercept)","Estimate"]
+bstart <- co2[1]
+cstart <- coef(summary(lm_logco2))["time","Estimate"]
+
+time0 <- time-1788
+nlmco2 <- nls(co2 ~ a+b*exp(c*time0),start=list(a=astart,b=bstart,c=cstart))
+predexp <- predict(nlmco2)
+
+s_nlm <- summary(nlmco2)
+s_nlmr <- s_nlm$sigma
+s_nlmr
+
+print(paste(astart,bstart,cstart))
+
+plot(time,co2,"l")
+title(main="Mauna Loa Carbon Dioxide (ppm)")
+lines(time,predexp)
+
+aa <- coef(s_nlm)["a", "Estimate"]
+aa
+bb <- coef(s_nlm)["b", "Estimate"]
+bb
+cc <- coef(s_nlm)["c", "Estimate"]
+cc
+
+```
+Problem 2d -- nonlinear least squares for 3-parameter exponential CO2 model 
+
+```{r}
+asd <- coef(s_nlm)["a", "Std. Error"]
+t <- 1850-1958
+x <- aa + bb*exp(cc*t)
+x
+dff <- 265 - aa
+sgm <- dff/asd
+sgm
+
+```
+Problem 2e
+
+```{r}
+
+t <- 1788-1958
+x <- aa + bb*exp(cc*t)
+x
+t <- 0 
+y <- aa + bb*exp(cc*t)
+y
+
+year_rate <- (y-x)/(1958-1788)
+year_rate
+
+dec_rate <- year_rate*10
+dec_rate
+
+```
+
+
+problem 3a -- Singular value decomposition of the G-matrix, data representers referenced to the midpoint of the time series
+
+```{r}
+
+data_representer <- (time-1990.0)/25.0
+data_representer2 <- data_representer^2
+constant <- rep(1.0,length(data_representer))
+gmatrix <- cbind(constant,data_representer,data_representer2,annc,anns,ann2c,ann2s)
+
+gsvd <- svd(gmatrix,7,7)
+
+singval <- gsvd$d
+ksing <- seq(1, length(singval))
+
+plot(ksing, singval, type = 'l')
+
+condno <- max(singval)/min(singval)
+
+print(paste("The condition number is ",condno))
+
+```
+
+Problem 3b -- print out the v-matrix singular vectors with largest and smallest singular values
+
+The values are approximately in the same range.
+```{r}
+
+v <- gsvd$v
+
+print("v-matrix singular vector with largest singular value")
+v[1:7,1]
+
+print("v-matrix singular vector with smallest singular value")
+v[1:7,7]
+
+```
+problem 3c -- Singular value decomposition of the G-matrix, data representers referenced to the Birth of Christ
+
+```{r}
+
+data_representer <- time/2000.0
+data_representer2 <- data_representer^2
+constant <- rep(1.0,length(data_representer))
+gmatrix <- cbind(constant,data_representer,data_representer2,annc,anns,ann2c,ann2s)
+
+gsvd <- svd(gmatrix,7,7)
+
+singval <- gsvd$d
+ksing <- seq(1, length(singval))
+
+plot(ksing, singval, type = 'l')
+
+condno <- max(singval)/min(singval)
+
+print(paste("The condition number is ",condno))
+
+plot(time, data_representer, type='l')
+lines(time, data_representer2)
+lines(time, constant)
+
+
+```
+problem 4 -- bootstrap
+
+```{r}
+
+library(boot)
+# define a function to obtain R-Squared from the data
+model <- function(formula,data,indices){
+  d <- data[indices,]
+  fit <- lm(formula,data=d)
+  return(coef(fit))
+}
+
+co2matrix <- data.frame(data=co2,g1=constant,g2=data_representer,g3=data_representer2,g4=annc,g5=anns,g6=ann2c,g7=ann2s)
+
+# bootstrapping with 1000 replications 
+results <- boot(data=co2matrix, statistic=model, 
+   R=1000, formula=data~g2+g3+g4+g5+g6+g7)
+
+results
+plot(results)
+
+rt <- results$t0
+rt
+
+```
+

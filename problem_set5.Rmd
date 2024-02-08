@@ -1,0 +1,515 @@
+---
+title: "Problem Set 5"
+author: "Elizabeth Bailey"
+date: "9/29/2021"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+data files converted to CSV files with these commands
+
+echo 'YEAR, MONTH, DTEMPC' >! Hadcrut_GlobalAverage.csv
+sed 's[/[ [' HadCRUT.4.6.0.0.monthly_ns_avg.txt | awk '{print $1 ", " $2 ", " $3}' >> Hadcrut_GlobalAverage.csv
+
+echo 'YEAR, MONTH, DTEMPC' >! Hadcrut_NHAverage.csv
+sed 's[/[ [' HadCRUT.4.6.0.0.monthly_nh.txt | awk '{print $1 ", " $2 ", " $3}' >> Hadcrut_NHAverage.csv
+
+echo 'YEAR, MONTH, DTEMPC' >! Hadcrut_SHAverage.csv
+sed 's[/[ [' HadCRUT.4.6.0.0.monthly_sh.txt | awk '{print $1 ", " $2 ", " $3}' >> Hadcrut_SHAverage.csv
+
+
+Question 1a -- t-test on the first and last decades of the 20th century
+
+```{r}
+
+had_ns_avg <- read.csv("Hadcrut_GlobalAverage.csv")
+temps <- had_ns_avg$DTEMPC
+years <- had_ns_avg$YEAR
+months <- had_ns_avg$MONTH
+
+time <- years + (months-0.5)/12.0
+
+had_sh_avg <- read.csv("Hadcrut_SHAverage.csv")
+had_nh_avg <- read.csv("Hadcrut_NHAverage.csv")
+temps_sh <- had_sh_avg$DTEMPC
+temps_nh <- had_nh_avg$DTEMPC
+
+N <- length(time)
+dtime <- seq(1900,1999,by=10)
+dN <- length(dtime)
+
+decavg <- matrix(0,dN,1)
+decvar <- matrix(0,dN,1)
+
+tt <- time>= 1900 & time<1910
+tem0 <- temps[tt == TRUE]
+N0 <- length(tem0)
+avg0 <- mean(tem0)
+var0 <- var(tem0)
+
+tt <- time>= 1990 & time<2000
+tem1 <- temps[tt == TRUE]
+N1 <- length(tem1)
+avg1 <- mean(tem1)
+var1 <- var(tem1)
+
+t0 <- (sqrt(N0-1)*(avg0))/sqrt(var0)
+t0
+t1 <- (sqrt(N1-1)*(avg1))/sqrt(var1)
+t1
+
+print(paste("mean of 1900s is ",avg0," degrees C, with standard deviation ",sqrt(var0)))
+print(paste("mean of 1990s is ",avg1," degrees C, with standard deviation ",sqrt(var1)))
+
+```
+Question 1b -- two-way T-tests of decadal sample means
+```{r}
+
+t <- (sqrt(N0-1)*(avg0-avg1))/sqrt(var0 + var1)
+t
+
+testt <- t.test(tem0, tem1)
+print(testt$statistic)
+
+```
+Question 1c -- t.tests of sample means of successive decades
+
+The temperatures increase for 10 successive decade pairs and decrease for 6 successive decade pairs. I think global warming began some time around the turn of the 20th century. 
+```{r}
+
+decade1_t <- 1:16
+decade1_logp <- 1:16
+decade2_t <- 1:16
+decade2_logp <- 1:16
+dtime <- seq(1860,2010,by=10)
+dN <- length(decade1_t)
+
+grt <- matrix(0,dN,1)
+lss <- matrix(0,dN,1)
+calct <- matrix(0,dN,1)
+funt <- matrix(0,dN,1)
+ptest <- matrix(0,dN,1)
+
+k <- 0
+for (i in seq(1850,2000,by=10)) {
+  k <- k + 1
+  t1 <- time>=i & time<(i+10)
+  tem1 <- temps[t1 == TRUE]
+  t2 <- time>=(i+10) & time<(i+20)
+  tem2 <- temps[t2 == TRUE]
+  N0 <- length(tem2)
+  avg1 <- mean(tem1)
+  avg2 <- mean(tem2)
+  var1 <- var(tem1)
+  var2 <- var(tem2)
+  t <- (sqrt(N0-1)*(avg1-avg2))/sqrt(var1 + var2)
+  calct[k] <- t
+  testt <- t.test(tem1, tem2, alternative = "two.sided", conf.level = 0.95)
+  funt[k] <- testt$statistic
+  ptest[k] <- testt$p.value 
+  great <- t.test(tem1, tem2, alternative = "greater", conf.level = 0.99)
+  grt[k] <- great$p.value
+  less <- t.test(tem1, tem2, alternative = "less", conf.level = 0.99)
+  lss[k] <- less$p.value
+}
+
+g <- grt[grt==TRUE]
+decades <- seq(1855,2014,by=10)
+
+plot(decades, ptest, log = 'y')
+title("Decadal comparisons: Global Average Temperature Anomalies")
+plot(decades, grt)
+title("Decadal comparisons: Global Average Temperature Anomalies (Greater)")
+plot(decades, lss)
+title("Decadal comparisons: Global Average Temperature Anomalies(Less)")
+
+```
+
+Question 1d -- t.tests of sample means of successive decades: Northern Hemisphere
+
+The temperatures increase for 8 successive decade pairs and decrease for 7 successive decade pairs. I think global warming began some time around the 1910s. 
+```{r}
+
+# par(mfrow=c(2,2))
+
+decade1_t <- 1:16
+decade1_logp <- 1:16
+decade2_t <- 1:16
+decade2_logp <- 1:16
+dtime <- seq(1860,2010,by=10)
+dN <- length(decade1_t)
+
+grt <- matrix(0,dN,1)
+lss <- matrix(0,dN,1)
+calct <- matrix(0,dN,1)
+funt <- matrix(0,dN,1)
+ptest <- matrix(0,dN,1)
+
+k <- 0
+for (i in seq(1850,2000,by=10)) {
+  k <- k + 1
+  t1 <- time>=i & time<(i+10)
+  tem1 <- temps_nh[t1 == TRUE]
+  t2 <- time>=(i+10) & time<(i+20)
+  tem2 <- temps_nh[t2 == TRUE]
+  N0 <- length(tem2)
+  avg1 <- mean(tem1)
+  avg2 <- mean(tem2)
+  var1 <- var(tem1)
+  var2 <- var(tem2)
+  t <- (sqrt(N0-1)*(avg1-avg2))/sqrt(var1 + var2)
+  calct[k] <- t
+  testt <- t.test(tem1, tem2, alternative = "two.sided", conf.level = 0.95)
+  funt[k] <- testt$statistic
+  ptest[k] <- testt$p.value 
+  great <- t.test(tem1, tem2, alternative = "greater", conf.level = 0.99)
+  grt[k] <- great$p.value
+  less <- t.test(tem1, tem2, alternative = "less", conf.level = 0.99)
+  lss[k] <- less$p.value
+}
+
+g <- grt[grt==TRUE]
+decades <- seq(1855,2014,by=10)
+
+plot(decades, ptest, log = 'y')
+title("Decadal comparisons: NH Average Temperature Anomalies")
+plot(decades, grt)
+title("Decadal comparisons: NH Average Temperature Anomalies (Greater)")
+plot(decades, lss)
+title("Decadal comparisons: NH Average Temperature Anomalies(Less)")
+
+```
+
+Question 1e -- t.tests of sample means of successive decades: Southern Hemisphere
+
+The temperatures increase for 12 successive decade pairs and decrease for 4 successive decade pairs. I think global warming began some time around the turn of the 20th century. 
+```{r}
+
+decade1_t <- 1:16
+decade1_logp <- 1:16
+decade2_t <- 1:16
+decade2_logp <- 1:16
+dtime <- seq(1860,2010,by=10)
+dN <- length(decade1_t)
+
+grt <- matrix(0,dN,1)
+lss <- matrix(0,dN,1)
+calct <- matrix(0,dN,1)
+funt <- matrix(0,dN,1)
+ptest <- matrix(0,dN,1)
+
+k <- 0
+for (i in seq(1850,2000,by=10)) {
+  k <- k + 1
+  t1 <- time>=i & time<(i+10)
+  tem1 <- temps_sh[t1 == TRUE]
+  t2 <- time>=(i+10) & time<(i+20)
+  tem2 <- temps_sh[t2 == TRUE]
+  N0 <- length(tem2)
+  avg1 <- mean(tem1)
+  avg2 <- mean(tem2)
+  var1 <- var(tem1)
+  var2 <- var(tem2)
+  t <- (sqrt(N0-1)*(avg1-avg2))/sqrt(var1 + var2)
+  calct[k] <- t
+  testt <- t.test(tem1, tem2, alternative = "two.sided", conf.level = 0.95)
+  funt[k] <- testt$statistic
+  ptest[k] <- testt$p.value 
+  great <- t.test(tem1, tem2, alternative = "greater", conf.level = 0.99)
+  grt[k] <- great$p.value
+  less <- t.test(tem1, tem2, alternative = "less", conf.level = 0.99)
+  lss[k] <- less$p.value
+}
+
+g <- grt[grt==TRUE]
+decades <- seq(1855,2014,by=10)
+
+plot(decades, ptest, log = 'y')
+title("Decadal comparisons: SH Average Temperature Anomalies")
+plot(decades, grt)
+title("Decadal comparisons: SH Average Temperature Anomalies (Greater)")
+plot(decades, lss)
+title("Decadal comparisons: SH Average Temperature Anomalies(Less)")
+
+```
+
+Question 2a -- Plot some F variance ratio distributions
+
+```{r}
+
+fvarrat <- seq(.001,10.0,by=0.001)
+f1 <- df(fvarrat, df1 = 2, df2 = 8, ncp = 0)
+f2 <- df(fvarrat, df1 = 10, df2 = 20, ncp = 0)
+f3 <- df(fvarrat, df1 = 17, df2 = 2000, ncp = 0)
+
+plot(f3, type = 'l', col = 'blue')
+lines(f2, type = 'l', col = 'green')
+lines(f1, type = 'l', col = 'red')
+title(" 2 & 8 (red), 10 & 20 (green) and 17 & 2000 (blue) dof",ylab="F-distribution PDF")
+
+f1 <- df(fvarrat, df1 = 2, df2 = 8, ncp = 0, log = TRUE)
+f2 <- df(fvarrat, df1 = 10, df2 = 20, ncp = 0, log = TRUE)
+f3 <- df(fvarrat, df1 = 17, df2 = 2000, ncp = 0, log = TRUE)
+
+plot(f3, type = 'l', col = 'blue')
+lines(f2, type = 'l', col = 'green')
+lines(f1, type = 'l', col = 'red')
+title(" 2 & 8 (red), 10 & 20 (green) and 17 & 2000 (blue) dof",ylab="LOG F-distribution PDF")
+
+```
+
+Question 2b -- ANOVA with global temperature anomalies
+
+```{r}
+
+N <- 17
+decade_means <- matrix(0,N,1)
+decade_vars <- matrix(0,N,1)
+totpts <- 17*120
+
+k=0
+for (i in seq(1850,2019,by=10)) {
+  k = k + 1
+  tt <- time>=i & time<(i+10)
+  tem <- temps[tt == TRUE]
+  men <- mean(tem)
+  decade_means[k] <- men
+  ver <- var(tem)
+  decade_vars[k] <- ver
+}
+grandmen <- mean(temps)
+
+sum1 <- 0 
+for (i in 1:N) {
+  squr <- (decade_means[i]-grandmen)^2
+  sum1 <- sum1 + squr
+}
+Yb <- (1/(N-1))*sum1
+
+M <- 120
+dec <- 1850
+sum2 <- 0
+mfrac <- 1/(M-1)
+for (j in 1:N) {
+  sum3 <- 0
+  for (i in 1:M){
+    tt <- time>=dec & time<(dec+10)
+    tem <- temps[tt == TRUE]
+    sqar <- (tem[i]-decade_means[j])^2
+    sum3 <- sum3 + sqar
+  }
+  mul <- mfrac*sum3
+  sum2 <- sum2 + mul
+  dec <- dec+10
+}
+Yw <- (1/N)*sum2
+
+# M <- 120
+# dec <- 1850
+# sum2 <- 0
+# mfrac <- 1/(M-1)
+# for (j in 1:N) {
+#   tt <- time>=dec & time<(dec+10)
+#   tem <- temps[tt == TRUE]
+#   sqar <- var(tem)
+#   mul <- mfrac*sqar
+#   sum2 <- sum2 + mul
+#   dec <- dec+10
+# }
+# Yw1 <- (1/N)*sum2
+
+FF <- Yb/Yw
+FF
+
+f <- round(FF,4)
+
+d1 <- N-1
+d2 <- N*(M-1)
+fcdf <- pf(fvarrat, df1 = d1, df2 = d2)
+plot(fvarrat, fcdf, type = 'l')
+
+ff <- fvarrat>(f-.001) &fvarrat<(f+.001)
+
+anova_prob <- fcdf[ff==T]
+pval <- 1-anova_prob
+print(paste("ANOVA probability of nonrandomness is ",anova_prob,"  p-value: ",pval))
+
+```
+
+Question 2c -- slice the temp anomalies by month
+
+```{r}
+
+n <- length(temps)
+
+N <- 12
+M <- 120
+monthly_means <- matrix(0,N,1)
+monthly_vars <- matrix(0,N,1)
+totpts <- 17*120
+
+for (i in 1:N) {
+  mon <- seq(i, n, by=12)
+  tem <- temps[mon]
+  men <- mean(tem[1:M])
+  monthly_means[i] <- men
+  ver <- var(tem[1:M])
+  monthly_vars[i] <- ver
+}
+
+tttp <- years >= 1850 & years<=1970
+
+grandmen <- mean(temps[tttp==TRUE])
+
+sum1 <- 0 
+for (i in 1:N) {
+  squr <- (monthly_means[i]-grandmen)^2
+  sum1 <- sum1 + squr
+}
+Yb <- (1/(N-1))*sum1
+
+sum2 <- 0
+mfrac <- 1/(M-1)
+for (j in 1:N) {
+  sum3 <- 0
+  mon <- seq(j, n, by=12)
+  tem <- temps[mon]
+  for (i in 1:M){
+    sqar <- (tem[i]-monthly_means[j])^2
+    sum3 <- sum3 + sqar
+  }
+  mul <- mfrac*sum3
+  sum2 <- sum2 + mul
+}
+Yw <- (1/N)*sum2
+
+FF <- Yb/Yw
+FF
+
+d1 <- N-1
+d2 <- N*(M-1) 
+fcdf <- pf(fvarrat, df1 = d1, df2 = d2)
+plot(fvarrat, fcdf, type = 'l')
+
+print(paste("stdev of within is ",Yw,"  stdev of among is ",Yb))
+print(paste("F variance ratio is ",FF))
+
+f <- round(FF,3)
+ff <- fvarrat>(f-.001) & fvarrat<(f+.001)
+
+testt <- t.test(temps)
+
+anova_prob <- fcdf[ff==T]
+pval <- 1-anova_prob
+
+print(paste("ANOVA probability of nonrandomness is ",anova_prob,"  p-value: ",pval))
+
+```
+
+Question 3a -- the correlation of hemispheric temperature anomalies
+
+```{r}
+
+N <- 120
+nn <- 17
+r <- matrix(0,nn,1)
+
+k <- 0
+for (i in seq(1850,2019,by=10)) {
+  k = k + 1
+  tt <- time>=i & time<(i+10)
+  tem_sh <- temps_sh[tt == TRUE]
+  tem_nh <- temps_nh[tt == TRUE]
+  men_sh <- mean(tem_sh)
+  men_nh <- mean(tem_nh)
+  sum1 <- 0 
+  sum2 <- 0
+  sum3 <- 0
+  for (j in 1:N){
+    diff_sh <- tem_sh[j] - men_sh
+    diff_nh <- tem_nh[j] - men_nh
+    num <- diff_sh*diff_nh
+    sum1 <- sum1 + num
+    sqar_sh <- diff_sh^2
+    sum2 <- sum2 + sqar_sh
+    sqar_nh <- diff_nh^2
+    sum3 <- sum3 + sqar_nh
+  }
+  corr <- sum1/sqrt(sum2*sum3)
+  r[k] <- corr
+}
+
+decades <- seq(1855,2019,by=10)
+decades
+
+plot(decades, r, type='l')
+
+```
+
+Question 3b -- the correlation of hemispheric temperature anomalies
+
+```{r}
+x <- (N-2)*(r^2)
+d1 <- 1
+d2 <- N-2
+
+fcdf <- pf(x, df1 = d1, df2 = d2)
+plot(x, fcdf)
+# plot(dtime,pvals)
+
+```
+Question 3c
+
+```{r}
+
+prb <- 1-fcdf
+plot(prb, log = 'y', type = 'l')
+
+```
+
+Question 3d -- compute the correlation between the sequences of decadal means for the Northern and Southern Hemispheres
+  
+```{r}
+
+N <- 120
+nn <- 17
+
+men_sh_tot <- mean(temps_sh)
+men_nh_tot <- mean(temps_nh)
+
+sum1 <- 0 
+sum2 <- 0
+sum3 <- 0
+for (i in seq(1850,2019,by=10)) {
+  tt <- time>=i & time<(i+10)
+  tem_sh <- temps_sh[tt == TRUE]
+  tem_nh <- temps_nh[tt == TRUE]
+  men_sh <- mean(tem_sh)
+  men_nh <- mean(tem_nh)
+  diff_sh <- men_sh - men_sh_tot
+  diff_nh <- men_nh - men_nh_tot
+  num <- diff_sh*diff_nh
+  sum1 <- sum1 + num
+  sqar_sh <- diff_sh^2
+  sum2 <- sum2 + sqar_sh
+  sqar_nh <- diff_nh^2
+  sum3 <- sum3 + sqar_nh
+}
+
+corr <- sum1/sqrt(sum2*sum3)
+r <- corr
+r
+
+ff <- (nn-1)*r
+ff
+
+d1 <- 1
+d2 <- nn-2
+
+fcdf <- pf(ff, df1 = d1, df2 = d2)
+prob <- 1 - fcdf
+prob
+
+```

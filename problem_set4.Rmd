@@ -1,0 +1,347 @@
+---
+title: "Problem Set 4"
+author: "Elizabeth Bailey"
+date: "9/23/2021"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+Quesiton 1
+
+
+```{r}
+
+had_ns_avg <- read.csv("Hadcrut_GlobalAverage.csv")
+names(had_ns_avg)
+temps <- had_ns_avg$DTEMPC
+length(temps)
+years <- had_ns_avg$YEAR
+months <- had_ns_avg$MONTH
+
+time <- years + (months-0.5)/12.0
+time[1:24]
+ 
+```
+Question 1a
+
+```{r}
+N <- length(temps)
+runavg <- matrix(0,N-5,1)
+
+for (k in 5:N) {
+  sum <- 0
+  for (j in -5:5) {
+    sum <- sum + temps[k+j]
+  }
+  avg <- (1/11)*sum
+  runavg[k-5] <- avg
+}
+head(runavg)
+
+rnt <- time[6:N]
+
+plot(time, temps)
+lines(rnt, runavg, col='lightgreen')
+title("Hadley Center Global Average Temperature Anomalies",xlab="year",ylab="°C anomaly referenced to 1961-1990 average")
+
+
+```
+
+Question 1b -- sample mean and sample variance of entire time series
+
+```{r}
+
+men <- sum(temps)/N
+men
+mean(temps)
+
+dif <- (temps-men)
+difsq <- dif^2
+vary <- sum(difsq)*(1/(N-1))
+vary
+
+var(temps)
+
+x <- seq(min(temps), max(temps), by=.01)
+pfx <- dnorm(x, mean = men, sd = sqrt(vary))
+gss <- (pfx*N)/19
+
+hist(temps, breaks = 50)
+lines(x,gss)
+
+
+```
+
+Question 1c  -- QQ plot
+
+```{r}
+
+int <- (max(temps) - min(temps))/N
+
+
+x <- seq(min(temps)+int, max(temps), by=int)
+length(x)
+
+empcdf <- ecdf(temps)
+ecf <- empcdf(x)
+plot(x, ecf, type='l')
+title('Empirical and Theoretical CDFs')
+
+tcdf <- pnorm(x, mean = men, sd = sqrt(vary))
+lines(x, tcdf, type='l')
+
+u <- seq(0, 1, by=.001)
+v <- seq(0, 1, by=.001)
+plot(tcdf, ecf, type='l',xlab="Empirical CDF",ylab="Gaussian CDF")
+lines(u,v, type='l', col='gray')
+title("QQ Plot of Global-Average Temp Anomalies")
+
+ldevi <- 0
+for (i in 1:N) {
+  dff <- abs(ecf[i]-tcdf[i])
+  if (dff > ldevi) {
+    ldevi <- dff
+  }
+}
+
+ldevi
+
+```
+Question 1d  -- Beta distribution and the median
+
+```{r}
+N <- length(temps)
+length(ecf)
+med <- median(temps)
+med
+# medtemp <- which(temps==med)
+# medtemp
+# temps[medtemp==TRUE]
+e <- pnorm(med, mean = men, sd = sqrt(vary))
+e
+# e5 <- 1-ecf==0.5
+# i <- temps[e5==TRUE]
+# i
+ro <- e - 0.5
+fact <- (1-(4*(ro)^2))^(N/2)
+fact
+# print(paste("the CDF deviation of the median (\rho) is ",rho))
+
+# print(paste("the Beta PDF at the sample median is ",pdf_factor," smaller than at the theoretical median"))
+
+```
+
+Question 1e -- sample means of decades
+
+Yes, there is an apparent positive trend in these plots, indicating global wamring.
+```{r}
+
+N <- length(time)
+decade_means <- 1:17
+dN <- length(decade_means)
+dtime <- seq(1855,2015,by=10)
+
+
+decavg <- matrix(0,dN,1)
+decvar <- matrix(0,dN,1)
+k=0
+for (i in seq(1850,2019,by=10)) {
+  k = k + 1
+  tt <- time>=i & time<(i+10)
+  tem <- temps[tt == TRUE]
+  men <- mean(tem)
+  decavg[k] <- men
+  ver <- var(tem)
+  decvar[k] <- ver
+}
+decavg
+st1 <- decavg - sqrt(decvar)
+st2 <- decavg + sqrt(decvar)
+
+plot(dtime, decavg, type='l')
+arrows(dtime, st1, dtime, st2, length = 0)
+title("Hadley Center Global Average Temperature Anomalies")
+
+plot(dtime, decvar, type='l')
+
+```
+Problem 1f -- compare first and last decades of the 20th century
+
+Global warming is apparent when looking at the shift of mean in these plots.
+```{r}
+
+N <- length(time)
+dtime <- seq(1900,1999,by=10)
+dN <- length(dtime)
+
+decavg <- matrix(0,dN,1)
+decvar <- matrix(0,dN,1)
+
+tt <- time>= 1900 & time<1910
+tem0 <- temps[tt == TRUE]
+men <- mean(tem0)
+avg0 <- men
+ver <- var(tem0)
+var0 <- ver
+
+tt <- time>= 1990 & time<2000
+tem1 <- temps[tt == TRUE]
+men <- mean(tem1)
+avg1 <- men
+ver <- var(tem1)
+var1 <- ver
+
+
+min <- min(temps)
+max <- max(temps)
+
+x <- seq(min, max, by = 0.01)
+
+pf <- dnorm(x, mean = avg0, sd = sqrt(var0))
+cf <- pnorm(x, mean = avg0, sd = sqrt(var0))
+ef <- ecdf(tem0)
+emp <- ef(x)
+
+pf2 <- dnorm(x, mean = avg1, sd = sqrt(var1))
+cf2 <- pnorm(x, mean = avg1, sd = sqrt(var1))
+ef2 <- ecdf(tem1)
+emp2 <- ef2(x)
+
+plot(x, pf, type='l')
+title("1900 to 1909")
+plot(x, pf2, type='l')
+title("1990 to 1999")
+plot(emp, cf, type = 'l')
+plot(emp2, cf2, type = 'l')
+
+plot(x, cf, type = 'l')
+lines(x, cf2, type = 'l')
+lines(x, emp, type = 'l')
+lines(x, emp2, type = 'l')
+# title("first and last decades of 20th century Global-Average Temp Anomalies",xlab="Degrees Celsius",ylab="Empirical and Gaussian CDFs")
+
+
+
+```
+Problem 2 -- Earthquake distributions
+
+Question 2c
+
+```{r}
+
+gevents <- read.csv("GlobalEarthquakes6.0.csv")
+names(gevents)
+
+year <- gevents$YEAR
+mags <- gevents$MAG
+
+nevents <- length(mags)
+dstep <- 1.0/nevents
+steps <- seq(1.0-dstep/2.0,dstep/2.0,length.out = nevents)
+# plot(mags,steps,type="l",log="y")
+minn <- min(mags)
+maxx <- max(mags)
+int <- (maxx-minn)/nevents
+int
+x <- seq(minn, maxx, by=int)
+
+ef <- ecdf(mags)
+emp <- ef(x)
+
+plot(x, emp, type='l')
+
+```
+Question 2d
+
+```{r}
+y <- 1 - emp
+plot(x, y, type = 'l', log="y")
+```
+
+Question 2e -- the frequency of great earthquakes versus Poisson distribution
+
+Yes, great earthquakes follow the poisson distribution. 
+
+```{r}
+yrs <- 1980:2020
+yn <- length(yrs)
+sum <- 0
+ma <- matrix(0, yn, 1)
+ys <- matrix(0, yn, 1)
+
+j <- 0
+for (i in yrs) {
+  j <- j + 1
+  yr <- year==i
+  m <- mags[yr==TRUE]
+  m8 <- m>=8.0
+  m8true <- m[m8==TRUE]
+  ml <- length(m8true)
+  ma[j] <- ml
+  ys[j] <- i
+}
+
+ma
+sortm <- sort(ma)
+n <- length(sortm)
+lamb <- mean(ma)
+int <- (max(ma)-min(ma))/n
+k <- seq(min(ma), max(ma), by=1)
+
+ppdf <- dpois(k, lambda = lamb)
+emppdf <- dpois(sortm, lambda = lamb)
+
+pcdf <- ppois(k, lambda = lamb)
+
+plot(k, ppdf, type = 'l', col ='red')
+lines(sortm, emppdf, type = 'l')
+
+plot(k, pcdf, type = 'l')
+
+```
+
+Question 2f -- the frequency of very large earthquakes versus Poisson distribution  
+
+Yes, very large earthquakes follow the poisson distribution.
+
+```{r}
+
+yrs <- 1980:2020
+yn <- length(yrs)
+sum <- 0
+ma <- matrix(0, yn, 1)
+ys <- matrix(0, yn, 1)
+
+j <- 0
+for (i in yrs) {
+  j <- j + 1
+  yr <- year==i
+  m <- mags[yr==TRUE]
+  m8 <- m>=7.5
+  m8true <- m[m8==TRUE]
+  ml <- length(m8true)
+  ma[j] <- ml
+  ys[j] <- i
+}
+ma
+
+sortm <- sort(ma)
+n <- length(sortm)
+lamb <- mean(ma)
+int <- (max(ma)-min(ma))/n
+k <- seq(min(ma), max(ma), by=1)
+
+ppdf <- dpois(k, lambda = lamb)
+emppdf <- dpois(sortm, lambda = lamb)
+
+pcdf <- ppois(k, lambda = lamb)
+
+plot(k, ppdf, type = 'l', col ='red')
+plot(sortm, emppdf, type = 'l')
+
+plot(k, pcdf, type = 'l')
+
+```
+

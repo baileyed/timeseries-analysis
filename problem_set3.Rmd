@@ -1,0 +1,347 @@
+---
+title: "Problem Set 3"
+author: "Elizabeth Bailey"
+date: "9/21/2021"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+Question 1a
+
+```{r}
+N <- 9.0
+n <- seq(1.0, N, by=1.0)
+x <- n^2
+print(x)
+
+men <- sum(x)/N
+print(men)
+
+```
+Question 1b -- median
+
+```{r}
+
+med <- x[5]
+print(med)
+
+```
+Question 1c -- harmonic mean
+
+```{r}
+N <- 9.0
+n <- seq(1.0, N, by=1.0)
+x <- n^2
+
+xinv <- x^{-1}
+moohrecip <- sum(xinv)/N
+mooh <- moohrecip^{-1}
+mooh
+
+```
+Question 1d -- geometric mean
+
+```{r}
+N <- 9.0
+n <- seq(1.0, N, by=1.0)
+x <- n^2
+
+xlog = log(x)
+moogln <- sum(xlog)/N
+moog <- exp(moogln)
+moog
+```
+problem 2e
+```{r}
+M <- 5000
+delx <- 0.01
+# x <- (k-0.5)*delx
+y <- function(x) ((x/4)*exp(-x/2))
+
+#Numerical integration from 0 to 50
+sum <- 0
+for (k in seq(1, M, by=1)) {
+  x <- (k-0.5)*delx
+  rum <- log(x)*y(x)*delx
+  sum <- sum + rum
+}
+sum
+mg <- exp(sum)
+mg
+
+#Numerical integration from 0 to 100
+M <- 10000
+sum <- 0
+for (k in seq(1, M, by=1)) {
+  x <- (k-0.5)*delx
+  rum <- log(x)*y(x)*delx
+  sum <- sum + rum
+}
+sum
+mg <- exp(sum)
+mg
+
+# #Continuous Integration to check accuracy.
+# intgrd <- function(x) log(x)*y(x)
+# integrate(intgrd, lower=0, upper=Inf)
+
+x <- seq(.001, 100, by=.01)
+intgrd <- log(x)*y(x)
+plot(x,intgrd, type='l')
+```
+Problem 3a
+
+```{r}
+
+sunspots <- read.csv(file="sunspots_annual_1700_2008.csv")
+head(sunspots)
+
+yr <- sunspots$YEAR
+sspots <- sunspots$SUNACTIVITY
+plot(yr,sspots)
+
+smax <- max(sspots)
+smax
+smin <- min(sspots)
+smin
+
+hist(sspots, breaks = 20, freq = TRUE)
+```
+Problem 3b
+```{r}
+sum <- sum(sspots)
+N <- 2009-1700
+men <- sum/N
+men
+
+mean(sspots)
+
+dif <- (sspots-men)
+difsq <- dif^2
+syum <- sum(difsq)
+sampstd <- sqrt(syum/N)
+sampstd
+```
+Problem 3c
+
+This PDF doesn't look good because the standard deviation seems to be off and the mean peaks at a different point. 
+
+```{r}
+x <- seq(smin, smax, by=1)
+
+nn <- 10000
+dd <- dnorm(x,mean=men, sd=sampstd)
+ddnn <- nn*dd/3
+
+
+
+plot(x, dd, type='l')
+
+hist(sspots, breaks = 20, freq = TRUE)
+lines(x,ddnn)
+
+```
+ Problem 3d
+ 
+```{r}
+ 
+lspots <- log(sspots+10.0)
+lsmin <- min(lspots)
+lsmin
+lsmax <- max(lspots)
+lsmax
+ 
+hist(lspots, breaks=50)
+
+sum <- sum(lspots)
+sum
+N <- 2009-1700
+men <- sum/N
+men
+
+mean(lspots)
+
+dif <- (lspots-men)
+difsq <- dif^2
+syum <- sum(difsq)
+syum
+sampstd <- sqrt(syum/N)
+sampstd
+
+
+```
+Problem 3e
+I think it is a better than part c, but the distribution in the histogram seems to be more even without much of a centralized peak.
+```{r}
+
+x <- seq(lsmin, lsmax, by=.01)
+# x <- seq(smin, smax, by=1)
+
+nn <- 10000
+ddnn <- nn*dd/3
+
+
+dd <- dnorm(x,mean=men, sd=sampstd)
+plot(x, dd, type='l')
+
+hist(lspots, breaks = 50, freq = TRUE)
+
+```
+ Problem 3f
+ 
+```{r}
+ 
+sortspots <- sort(sspots)
+N <- length(sortspots)
+
+smax <- max(sspots)
+smax
+smin <- min(sspots)
+smin
+
+m <- seq(smin, smax, by=1)
+kl <- length(m)
+kl
+
+empcdf = matrix(0,kl,1)
+
+
+sum <- 0
+for (k in seq(smin, smax, by=1)) {
+  ss <- sortspots>=k & sortspots<(k+1)
+  n <- length(ss[ss == TRUE])
+  ratio <- n/N
+  sum <- sum + ratio
+  empcdf[k+1] <- sum
+}
+head(empcdf)
+plot(m, empcdf, type='l')
+title("empirical CDF of sunspot data 1700AD-2009AD")
+
+```
+  Problem 3g
+  
+  
+```{r}
+
+plot(log(sspots))
+
+```
+```{r}
+moo <- 3.5
+sgm <- 0.9
+S <- seq(.001,1000, by=1)
+
+ps <- function(S) ((1/(sgm*sqrt(2*pi)*(10+S)))*exp(-(log(10+S)-moo)^(2)/(2*sgm^(2))))
+
+integrate(ps, lower = 0, upper = Inf)
+
+#Numerical integration
+sum <- 0
+cdf = matrix(0,length(S),1)
+for (i in seq(.001,1000, by=1)) {
+  c <- ps(i)
+  sum <- sum + c
+  cdf[i+1] <- sum
+}
+sum
+
+plot(cdf, type='l', ylim = c(0, 1))
+lines(m, empcdf, type='l', col='red')
+
+```
+
+```{r}
+moo <- 3.75
+sgm <- .85
+S <- seq(.001,1000, by=1)
+
+ps <- function(S) ((1/(sgm*sqrt(2*pi)*(10+S)))*exp(-(log(10+S)-moo)^(2)/(2*sgm^(2))))
+
+integrate(ps, lower = 0, upper = Inf)
+
+#Numerical integration
+sum <- 0
+cdf = matrix(0,length(S),1)
+for (i in seq(.001,1000, by=1)) {
+  c <- ps(i)
+  sum <- sum + c
+  cdf[i+1] <- sum
+}
+sum
+
+plot(cdf, type='l', ylim = c(0, 1))
+lines(m, empcdf, type='l', col='red')
+
+```
+
+```{r}
+moo <- 4
+sgm <- 0.8
+S <- seq(.001,1000, by=1)
+
+ps <- function(S) ((1/(sgm*sqrt(2*pi)*(10+S)))*exp(-(log(10+S)-moo)^(2)/(2*sgm^(2))))
+
+integrate(ps, lower = 0, upper = Inf)
+
+#Numerical integration
+sum <- 0
+cdf = matrix(0,length(S),1)
+for (i in seq(.001,1000, by=1)) {
+  c <- ps(i)
+  sum <- sum + c
+  cdf[i+1] <- sum
+}
+sum
+
+plot(cdf, type='l', ylim = c(0, 1))
+lines(m, empcdf, type='l', col='red')
+
+```
+
+
+  Problem 4 -- negative binomial
+  
+  Problem 4a
+  
+```{r}
+
+k <- 4
+s <- 0.5
+N <- seq(4,20,by=1)
+
+nbin <- choose(N-1, k-1)*s^(k)*(1-s)^(N-k)
+
+plot(N, nbin, type='l')
+  
+```
+  Problem 4b
+  
+```{r}
+
+nbpdf <- dnbinom(N,k,s)
+plot(N, nbpdf, type='l')
+title("Probability of four heads after a number of coin flips")
+  
+nbcdf <- pnbinom(N,k,s)
+plot(N, nbcdf, type='l')
+title("Cumlative probability of four heads after a number of coin flips")
+
+```
+  Problem 4c
+
+```{r}
+k <- 4
+s <- 0.1
+N <- seq(k,100,by=1)
+
+nbpdf <- dnbinom(N,k,s)
+plot(N, nbpdf, type='l')
+title("Probability of four heads after a number of coin flips")
+  
+nbcdf <- pnbinom(N,k,s)
+plot(N, nbcdf, type='l')
+title("Cumlative probability of four heads after a number of coin flips")
+```
